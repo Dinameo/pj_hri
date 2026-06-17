@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class Mpu : MonoBehaviour
 {
+    // THÊM CHECKBOX BẬT/TẮT TÍNH NĂNG Ở ĐÂY
+    public bool EnableMpu = false; 
+
     public bool OffsetMpu = false;
     public bool isUpdate = false;
 
@@ -18,6 +21,9 @@ public class Mpu : MonoBehaviour
 
     void Update()
     {
+        // Kiểm tra nếu checkbox bị tắt thì dừng luôn, không làm gì cả
+        if (!EnableMpu) return; 
+
         if (UDPConnectObject == null) return;
 
         UDPConnectObject.GetMsg();

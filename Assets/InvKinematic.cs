@@ -17,6 +17,7 @@ public class InvKinematic : MonoBehaviour
     float[,] solutions;
     float[] solutions_index;
     public Mpu mpu;
+    public MouseTracker mouseTracker;
     public int autoSelectIndex = 1;
 
     void Start()
@@ -58,13 +59,46 @@ public class InvKinematic : MonoBehaviour
     void Update()
     {
         bool auto = uiGameObject.InvPanel.transform.Find("Auto").GetComponent<Toggle>().isOn;
-        if(!auto) return; // Chưa bật auto
-        x += mpu.x;
-        y += mpu.y;
-        z += mpu.z;
-        roll = mpu.roll;
-        pitch = mpu.pitch;
-        yaw = mpu.yaw;
+        if(!auto)
+        {
+            uiGameObject.InputDropdown.value = 0;
+            return;
+        }
+        if(uiGameObject.InputDropdown.value == 0)
+        {
+            mouseTracker.UseMouseTracker = false;
+            mpu.EnableMpu = false;
+        }
+        else if(uiGameObject.InputDropdown.value == 1)
+        {
+            mouseTracker.UseMouseTracker = false;
+            mpu.EnableMpu = true;
+        }
+        else if(uiGameObject.InputDropdown.value == 2)
+        {
+            mouseTracker.UseMouseTracker = true;
+            mpu.EnableMpu = false;
+        }
+        
+        if(mouseTracker.UseMouseTracker)
+        {
+
+            x = mouseTracker.x;
+            y = mouseTracker.y;
+            z = mouseTracker.z;
+            roll = mouseTracker.roll;
+            pitch = mouseTracker.pitch;
+            yaw = mouseTracker.yaw;
+        }
+        else if(mpu.EnableMpu)
+        {
+            x = mpu.x;
+            y = mpu.y;
+            z = mpu.z;
+            roll = mpu.roll;
+            pitch = mpu.pitch;
+            yaw = mpu.yaw;
+        }
 
 
 
@@ -248,17 +282,24 @@ public class InvKinematic : MonoBehaviour
         solutions_index = new float[solutions.GetLength(0)];
         uiGameObject.SolutionsDropdown.options.Clear();
         uiGameObject.SolutionsDropdown.options.Add(new Dropdown.OptionData("Select Solution"));
+        
         for(int i = 0; i < solutions.GetLength(0); i++)
         {
+            bool continueAdding = true;
             float[,] t06;
             float[] thetas_vector = new float[6];
             for(int j = 0; j < 6; j++)
             {
+                thetas_vector[j] = solutions[i, j];
                 if(thetas_vector[j] < DH_Parameters.jointLimit[j, 0] || thetas_vector[j] > DH_Parameters.jointLimit[j, 1])
                 {
-                    continue;
+                    continueAdding = false;
+                    break;
                 }
-                thetas_vector[j] = solutions[i, j];
+            }
+            if(!continueAdding)
+            {
+                continue;
             }
             forwardKinematic.Forward(thetas_vector, out t06);
             float x_f, y_f, z_f;

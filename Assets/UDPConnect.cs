@@ -30,17 +30,10 @@ public class UDPConnect : MonoBehaviour
             byte[] data = udp.Receive(ref remoteEndPoint);
             string message = Encoding.UTF8.GetString(data);
             Debug.Log("Received: " + message);
-            if(message != latestMessage)
-            {
-                Debug.Log("New UDP message received: " + message);
-                latestMessage = message;
-                DataProcessor(latestMessage);
-                hasNewData = true;
-            }
-            else
-            {
-                Debug.Log("Received UDP message is the same as the last one, ignoring.");
-            }
+            Debug.Log("New UDP message received: " + message);
+            latestMessage = message;
+            DataProcessor(latestMessage);
+            hasNewData = true;
         }
         else
         {

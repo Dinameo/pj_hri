@@ -1,0 +1,45 @@
+/Library/
+/Temp/
+/Obj/
+/Build/
+/Builds/
+/Logs/
+/UserSettings/
+MemoryCaptures/
+Recording/
+
+# Asset store packages
+/[A]ssets/AssetStoreTools*
+
+# Visual Studio / VS Code / Rider generated files
+*.csproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.opendb
+*.VC.db
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+/[L]ibrary/
+/[T]emp/
+/[O]bj/
+/[B]uild/
+/[B]uilds/
+/[L]ogs/
+/[U]serSettings/
+
+# Bỏ qua các file sinh ra khi chạy mô phỏng Matlab / Simulink
+**/slprj/
+**/*.slxc
+**/*.mat
+
+/Robot

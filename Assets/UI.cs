@@ -13,13 +13,13 @@ public class UI : MonoBehaviour
     public GameObject PosePanel;
     public GameObject InvPanel;
     public Dropdown SolutionsDropdown;
+    public Dropdown InputDropdown;
 
     public GameObject Robot;
     public GameObject EndEffector;
 
     void Start()
     {
-
         for (int i = 0; i < 6; i++)
         {
             sliders[i] = ManualControlPanel.transform
@@ -51,9 +51,16 @@ public class UI : MonoBehaviour
 
         InvPanel.transform.Find("Roll_input").GetComponent<InputField>().text = "0";
         InvPanel.transform.Find("Pitch_input").GetComponent<InputField>().text = "-90";
-        InvPanel.transform.Find("Yaw_input").GetComponent<InputField>().text = "0";
+        InvPanel.transform.Find("Yaw_input").GetComponent<InputField>().text = "-180";
 
         ControlRobotScript.FirstStart(Robot);
+
+        InputDropdown.options.Clear();
+        InputDropdown.options.Add(new Dropdown.OptionData("Disable"));
+        InputDropdown.options.Add(new Dropdown.OptionData("Use IMU"));
+        InputDropdown.options.Add(new Dropdown.OptionData("Use Mouse"));
+        InputDropdown.value = 0;
+        InputDropdown.RefreshShownValue();
     }
     public void OnChangeSliderValue(int index, float value)
     {
