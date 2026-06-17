@@ -1,5 +1,4 @@
 using UnityEngine;
-// Cần khai báo thêm thư viện EventSystems để check va chạm với UI Panel
 using UnityEngine.EventSystems; 
 using UnityEngine.InputSystem; 
 
@@ -18,26 +17,18 @@ public class MouseTracker : MonoBehaviour
     [Header("Offsets")]
     public float zeroX = 0;
     public float zeroY = 0;
-    public float zeroRoll = 0;
-    public float zeroPitch = 0;
-    public float zeroYaw = 0;
 
     [Header("Final Values")]
-    public float x, y, z = 1159, roll = 0, pitch = -90, yaw = -180; 
+    // Đặt mặc định ban đầu khi vừa vào game là x = 915
+    public float x = 915, y = 0, z = 1159, roll = 0, pitch = -90, yaw = -180; 
 
     private float rawMouseAccumulatedX = 0f;
     private float rawMouseAccumulatedY = 0f;
 
     void Start()
     {
-        if (UseMouseTracker)
-        {
-            LockCursor();
-        }
-        else
-        {
-            UnlockCursor();
-        }
+        if (UseMouseTracker) LockCursor();
+        else UnlockCursor();
     }
 
     void Update()
@@ -47,43 +38,50 @@ public class MouseTracker : MonoBehaviour
 
         if (UseMouseTracker)
         {
-            // KIỂM TRA CLICK VÀO VÙNG TRỐNG (KHÔNG PHẢI UI PANEL)
+            // 1. XỬ LÝ KHÓA CHUỘT
             if (Cursor.lockState == CursorLockMode.None && Mouse.current.leftButton.wasPressedThisFrame)
             {
-                // Kiểm tra xem con trỏ chuột hiện tại có đang đè lên bất kỳ UI Object nào không
                 if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 {
-                    // Nếu đang bấm vào UI (ví dụ: Dropdown, Panel, Button), bỏ qua không lock chuột
-                    // Debug.Log("Clicked on UI - Ignore Locking");
+                    // Click trúng UI -> Bỏ qua
                 }
                 else
                 {
-                    // Nếu bấm vào vùng trống, tiến hành khóa chuột như bình thường
                     LockCursor();
                 }
             }
 
-            if (Mouse.current != null)
+            // 2. CẬP NHẬT TỌA ĐỘ KHI CHUỘT ĐANG KHÓA
+            if (Cursor.lockState == CursorLockMode.Locked)
             {
-                Vector2 mouseDelta = Mouse.current.delta.ReadValue();
-                mouseX = mouseDelta.x * 0.1f;
-                mouseY = mouseDelta.y * 0.1f;
+                if (Mouse.current != null)
+                {
+                    Vector2 mouseDelta = Mouse.current.delta.ReadValue();
+                    mouseX = mouseDelta.x * 0.1f;
+                    mouseY = mouseDelta.y * 0.1f;
+                }
+
+                rawMouseAccumulatedX += mouseX * scaleFactor;
+                rawMouseAccumulatedY += mouseY * scaleFactor;
+                
+                isUpdate = true; 
+            }
+            else
+            {
+                isUpdate = false; 
             }
 
-            rawMouseAccumulatedX += mouseX * scaleFactor;
-            rawMouseAccumulatedY += mouseY * scaleFactor;
+            // ĐỔI LOGIC TOÁN HỌC: Cộng thêm 915 vào trục X 
+            // Như vậy khi vừa bấm Offset (rawMouseAccumulatedX - zeroX = 0), thì x sẽ bằng đúng 915
+            x = (rawMouseAccumulatedX - zeroX) + 915f;
+            y = rawMouseAccumulatedY - zeroY;
         }
 
+        // 3. XỬ LÝ LỆNH OFFSET
         if (OffsetMouse)
         {
             OffsetMouse = false;
             ZeroOffsetFromLatest();
-        }
-
-        if (UseMouseTracker)
-        {
-            x = rawMouseAccumulatedX - zeroX;
-            y = rawMouseAccumulatedY - zeroY;
         }
 
         if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
@@ -92,19 +90,18 @@ public class MouseTracker : MonoBehaviour
         }
     }
 
-    void ZeroOffsetFromLatest()
+    public void ZeroOffsetFromLatest()
     {
-        // Khi offset, đặt lại giá trị tích lũy hiện tại làm điểm mốc zero để x, y thực sự về 0
+        // Chụp lại vị trí chuột thô hiện tại
         zeroX = rawMouseAccumulatedX;
         zeroY = rawMouseAccumulatedY;
 
-        x = y = 0;
-        roll = 0;
-        pitch = -90;
-        yaw = -180;
+        // Ép vị trí robot về đúng mốc mong muốn ngay tại frame này
+        x = 915f;
+        y = 0f;
 
-        isUpdate = true;
-        Debug.Log("ZERO OFFSET DONE");
+        isUpdate = true; 
+        Debug.Log("LOGIC FIX: MOUSE RESET TO DEFAULT (915, 0) SUCCESSFUL");
     }
 
     void LockCursor()

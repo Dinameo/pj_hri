@@ -53,6 +53,17 @@ public class InvKinematic : MonoBehaviour
             }
         });
 
+        uiGameObject.InvPanel.transform.Find("OffsetButton").GetComponent<Button>().onClick.AddListener(() => {
+            if(mouseTracker.UseMouseTracker)
+            {
+                mouseTracker.ZeroOffsetFromLatest();
+            }
+            else if(mpu.EnableMpu)
+            {
+                mpu.ZeroOffsetFromLatest();
+            }
+        });
+
         
     }
     
@@ -79,7 +90,7 @@ public class InvKinematic : MonoBehaviour
             mouseTracker.UseMouseTracker = true;
             mpu.EnableMpu = false;
         }
-        
+
         if(mouseTracker.UseMouseTracker)
         {
 
@@ -99,6 +110,7 @@ public class InvKinematic : MonoBehaviour
             pitch = mpu.pitch;
             yaw = mpu.yaw;
         }
+        
 
 
 
