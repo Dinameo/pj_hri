@@ -41,5 +41,7 @@ Thumbs.db
 **/slprj/
 **/*.slxc
 **/*.mat
+**/*.rar
+**/*.zip
 
 /Robot
