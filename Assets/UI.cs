@@ -1,5 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Net;
+using System.Net.Sockets;
+using System.Net.NetworkInformation;
+
 public class UI : MonoBehaviour
 {
     public ControlRobot ControlRobotScript;
@@ -17,6 +21,8 @@ public class UI : MonoBehaviour
 
     public GameObject Robot;
     public GameObject EndEffector;
+    public GameObject UDPPanel;
+    public GameObject UDPConnectScript;
 
     void Start()
     {
@@ -61,6 +67,13 @@ public class UI : MonoBehaviour
         InputDropdown.options.Add(new Dropdown.OptionData("Use Mouse"));
         InputDropdown.value = 0;
         InputDropdown.RefreshShownValue();
+
+        UDPPanel.transform.Find("IP_Input").GetComponent<InputField>().text = GetBestLocalIPv4();
+        UDPPanel.transform.Find("Port_Input").GetComponent<InputField>().text = UDPConnectScript.GetComponent<UDPConnect>().listenPort.ToString();
+        UDPPanel.transform.Find("Port_Input").GetComponent<InputField>().onEndEdit.AddListener((string value) =>
+        {
+            UDPConnectScript.GetComponent<UDPConnect>().listenPort = int.Parse(value);
+        });
     }
     public void OnChangeSliderValue(int index, float value)
     {
@@ -143,6 +156,72 @@ public class UI : MonoBehaviour
         float x, y, z, roll, pitch, yaw;
         GetPose(out x, out y, out z, out roll, out pitch, out yaw);
         UpdateInvPanel(x, y, z, roll, pitch, yaw);
+    }
+
+
+
+    string GetBestLocalIPv4()
+    {
+        foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+        {
+            if (ni.OperationalStatus != OperationalStatus.Up)
+                continue;
+
+            if (ni.NetworkInterfaceType == NetworkInterfaceType.Loopback)
+                continue;
+
+            if (ni.NetworkInterfaceType == NetworkInterfaceType.Tunnel)
+                continue;
+
+            string name = ni.Name.ToLower();
+
+            // Bỏ qua adapter ảo hay Bluetooth
+            if (name.Contains("virtual") ||
+                name.Contains("vmware") ||
+                name.Contains("virtualbox") ||
+                name.Contains("bluetooth") ||
+                name.Contains("npcap") ||
+                name.Contains("hyper-v"))
+            {
+                continue;
+            }
+
+            IPInterfaceProperties props = ni.GetIPProperties();
+
+            // Ưu tiên adapter có Gateway, thường là WiFi/Ethernet đang dùng Internet
+            bool hasGateway = false;
+
+            foreach (GatewayIPAddressInformation gateway in props.GatewayAddresses)
+            {
+                if (gateway.Address.AddressFamily == AddressFamily.InterNetwork &&
+                    gateway.Address.ToString() != "0.0.0.0")
+                {
+                    hasGateway = true;
+                    break;
+                }
+            }
+
+            if (!hasGateway)
+                continue;
+
+            foreach (UnicastIPAddressInformation ip in props.UnicastAddresses)
+            {
+                if (ip.Address.AddressFamily != AddressFamily.InterNetwork)
+                    continue;
+
+                string ipStr = ip.Address.ToString();
+
+                if (ipStr.StartsWith("127."))
+                    continue;
+
+                if (ipStr.StartsWith("169.254."))
+                    continue;
+
+                return ipStr;
+            }
+        }
+
+        return "Không tìm thấy IPv4 LAN";
     }
 
 }

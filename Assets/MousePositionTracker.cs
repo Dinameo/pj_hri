@@ -13,17 +13,19 @@ public class MouseTracker : MonoBehaviour
 
     [Header("Mouse Configuration")]
     public float scaleFactor = 1.0f; 
+    public float zScrollStep = 100.0f; // Mỗi nấc lăn chuột tăng/giảm Z bao nhiêu mm
 
     [Header("Offsets")]
     public float zeroX = 0;
     public float zeroY = 0;
+    public float zeroZ = 0;
 
     [Header("Final Values")]
-    // Đặt mặc định ban đầu khi vừa vào game là x = 915
     public float x = 915, y = 0, z = 1159, roll = 0, pitch = -90, yaw = -180; 
 
     private float rawMouseAccumulatedX = 0f;
     private float rawMouseAccumulatedY = 0f;
+    private float rawMouseAccumulatedZ = 0f;
 
     void Start()
     {
@@ -43,7 +45,7 @@ public class MouseTracker : MonoBehaviour
             {
                 if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 {
-                    // Click trúng UI -> Bỏ qua
+                    // Click trúng UI -> bỏ qua
                 }
                 else
                 {
@@ -51,7 +53,7 @@ public class MouseTracker : MonoBehaviour
                 }
             }
 
-            // 2. CẬP NHẬT TỌA ĐỘ KHI CHUỘT ĐANG KHÓA
+            // 2. CẬP NHẬT X, Y KHI CHUỘT ĐANG KHÓA
             if (Cursor.lockState == CursorLockMode.Locked)
             {
                 if (Mouse.current != null)
@@ -59,11 +61,19 @@ public class MouseTracker : MonoBehaviour
                     Vector2 mouseDelta = Mouse.current.delta.ReadValue();
                     mouseX = mouseDelta.x * 0.1f;
                     mouseY = mouseDelta.y * 0.1f;
+
+                    rawMouseAccumulatedX += mouseX * scaleFactor;
+                    rawMouseAccumulatedY += mouseY * scaleFactor;
+
+                    // Lăn chuột để tăng/giảm Z
+                    float scrollY = Mouse.current.scroll.ReadValue().y;
+
+                    if (scrollY != 0)
+                    {
+                        rawMouseAccumulatedZ += Mathf.Sign(scrollY) * zScrollStep;
+                    }
                 }
 
-                rawMouseAccumulatedX += mouseX * scaleFactor;
-                rawMouseAccumulatedY += mouseY * scaleFactor;
-                
                 isUpdate = true; 
             }
             else
@@ -71,13 +81,13 @@ public class MouseTracker : MonoBehaviour
                 isUpdate = false; 
             }
 
-            // ĐỔI LOGIC TOÁN HỌC: Cộng thêm 915 vào trục X 
-            // Như vậy khi vừa bấm Offset (rawMouseAccumulatedX - zeroX = 0), thì x sẽ bằng đúng 915
+            // 3. TÍNH GIÁ TRỊ CUỐI
             x = (rawMouseAccumulatedX - zeroX) + 915f;
             y = rawMouseAccumulatedY - zeroY;
+            z = (rawMouseAccumulatedZ - zeroZ) + 1159f;
         }
 
-        // 3. XỬ LÝ LỆNH OFFSET
+        // 4. XỬ LÝ LỆNH OFFSET
         if (OffsetMouse)
         {
             OffsetMouse = false;
@@ -92,16 +102,16 @@ public class MouseTracker : MonoBehaviour
 
     public void ZeroOffsetFromLatest()
     {
-        // Chụp lại vị trí chuột thô hiện tại
         zeroX = rawMouseAccumulatedX;
         zeroY = rawMouseAccumulatedY;
+        zeroZ = rawMouseAccumulatedZ;
 
-        // Ép vị trí robot về đúng mốc mong muốn ngay tại frame này
         x = 915f;
         y = 0f;
+        z = 1159f;
 
         isUpdate = true; 
-        Debug.Log("LOGIC FIX: MOUSE RESET TO DEFAULT (915, 0) SUCCESSFUL");
+        Debug.Log("MOUSE RESET TO DEFAULT (915, 0, 1159) SUCCESSFUL");
     }
 
     void LockCursor()
